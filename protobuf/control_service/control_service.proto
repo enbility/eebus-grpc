@@ -37,4 +37,13 @@ service ControlService {
 
     // Subscribes to usecase events
     rpc SubscribeUseCaseEvents (SubscribeUseCaseEventsRequest) returns (stream SubscribeUseCaseEventsResponse) {}
+
+    // Subscribes to discovery events (DISCOVERED / REMOVED) for remote EEBUS
+    // services seen on the local network via mDNS / SHIP.
+    //
+    // Delivery is best-effort: each subscriber has a finite buffer and events
+    // may be dropped if the client is slow to consume. On subscribe, the
+    // current set of visible services is replayed as DISCOVERED events before
+    // any live events are forwarded (atomic — no duplicate replay events).
+    rpc SubscribeDiscoveryEvents (SubscribeDiscoveryEventsRequest) returns (stream DiscoveryEvent) {}
 }

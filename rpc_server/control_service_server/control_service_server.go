@@ -214,8 +214,8 @@ func (h *Server) RemoveEntity(_ context.Context, req *control_service.RemoveEnti
 func (h *Server) RegisterRemoteSki(_ context.Context, req *control_service.RegisterRemoteSkiRequest) (*control_service.EmptyResponse, error) {
 	h.Debug("Received register remote SKI command")
 
-	if !h.stateMachine.Is(StateReady) {
-		return &control_service.EmptyResponse{}, fmt.Errorf("Service is not in ready state")
+	if !h.stateMachine.Is(StateReady) && !h.stateMachine.Is(StateRunning) {
+		return &control_service.EmptyResponse{}, fmt.Errorf("Service must be in ready or running state")
 	}
 
 	h.eebusService.RegisterRemoteSKI(req.GetRemoteSki())
@@ -356,6 +356,38 @@ func (h *Server) SubscribeUseCaseEvents(req *control_service.SubscribeUseCaseEve
 		}
 	}
 	return nil
+}
+
+func (h *Server) SubscribeDiscoveryEvents(
+	_ *control_service.SubscribeDiscoveryEventsRequest,
+	stream control_service.ControlService_SubscribeDiscoveryEventsServer,
+) error {
+	if !h.stateMachine.Is(StateReady) && !h.stateMachine.Is(StateRunning) {
+		return fmt.Errorf("Service must be in ready or running state")
+	}
+
+	snapshot, ch, cancel := h.eebusService.SubscribeDiscoveries()
+	defer cancel()
+
+	for _, evt := range snapshot {
+		if err := stream.Send(evt); err != nil {
+			return err
+		}
+	}
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			return stream.Context().Err()
+		case evt, ok := <-ch:
+			if !ok {
+				return nil
+			}
+			if err := stream.Send(evt); err != nil {
+				return err
+			}
+		}
+	}
 }
 
 func (h *Server) Start(port *int) (int, error) {

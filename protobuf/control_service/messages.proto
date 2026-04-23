@@ -60,3 +60,23 @@ message SubscribeUseCaseEventsResponse {
     common_types.EntityAddress remote_entity_address = 2;
     UseCaseEvent use_case_event = 3;
 }
+
+message SubscribeDiscoveryEventsRequest {
+    // Reserved for future filters (e.g., by device_type).
+}
+
+message DiscoveryEvent {
+    enum Type {
+        UNKNOWN = 0;
+        DISCOVERED = 1;
+        REMOVED = 2;
+    }
+    Type type = 1;              // kind of event: a peer appeared or disappeared from mDNS
+    string remote_ski = 2;       // normalized hex, lowercase
+    string ship_identifier = 3;  // mDNS `id=` TXT — maps to RemoteService.Identifier
+    string brand = 4;            // mDNS `brand=` TXT
+    string model = 5;            // mDNS `model=` TXT
+    string device_type = 6;      // mDNS `type=` TXT — maps to RemoteService.Type
+    string serial = 7;           // mDNS `serial=` TXT (optional)
+    bool is_trusted = 8;         // snapshot of sidecar trust state at event time; see RegisterRemoteSki
+}
