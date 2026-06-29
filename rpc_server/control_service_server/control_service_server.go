@@ -132,7 +132,7 @@ func (h *Server) SetConfig(_ context.Context, req *control_service.SetConfigRequ
 
 	var entity_types []model.EntityTypeType
 	for _, entity_type := range req.GetEntityTypes() {
-		entity_types = append(entity_types, model.EntityTypeType(entity_type.String()))
+		entity_types = append(entity_types, type_conversions.ConvertRPCEntityType(entity_type))
 	}
 	configuration, err := api.NewConfiguration(
 		req.GetVendorCode(),
@@ -140,7 +140,7 @@ func (h *Server) SetConfig(_ context.Context, req *control_service.SetConfigRequ
 		req.GetDeviceModel(),
 		req.GetSerialNumber(),
 		device_categories,
-		model.DeviceTypeType(req.DeviceType.String()),
+		type_conversions.ConvertRPCDeviceType(req.DeviceType),
 		entity_types,
 		int(req.GetPort()),
 		*h.certificate,

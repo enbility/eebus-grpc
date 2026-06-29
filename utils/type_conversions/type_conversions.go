@@ -14,6 +14,53 @@ import (
 	"github.com/enbility/spine-go/model"
 )
 
+// deviceTypeMap maps proto DeviceType_Enum values to the SPINE model strings.
+// The proto enum uses SCREAMING_SNAKE_CASE; SPINE uses PascalCase — they do not
+// match, so a manual mapping is required.
+var deviceTypeMap = map[control_service.DeviceType_Enum]model.DeviceTypeType{
+	control_service.DeviceType_DISHWASHER:                model.DeviceTypeTypeDishwasher,
+	control_service.DeviceType_DRYER:                     model.DeviceTypeTypeDryer,
+	control_service.DeviceType_ENVIRONMENT_SENSOR:        model.DeviceTypeTypeEnvironmentSensor,
+	control_service.DeviceType_GENERIC:                   model.DeviceTypeTypeGeneric,
+	control_service.DeviceType_HEAT_GENERATION_SYSTEM:    model.DeviceTypeTypeHeatgenerationSystem,
+	control_service.DeviceType_HEAT_SINK_SYSTEM:          model.DeviceTypeTypeHeatsinkSystem,
+	control_service.DeviceType_HEAT_STORAGE_SYSTEM:       model.DeviceTypeTypeHeatstorageSystem,
+	control_service.DeviceType_HVAC_CONTROLLER:           model.DeviceTypeTypeHVACController,
+	control_service.DeviceType_SUBMETER:                  model.DeviceTypeTypeSubmeter,
+	control_service.DeviceType_WASHER:                    model.DeviceTypeTypeWasher,
+	control_service.DeviceType_ELECTRICITY_SUPPLY_SYSTEM: model.DeviceTypeTypeElectricitySupplySystem,
+	control_service.DeviceType_ENERGY_MANAGEMENT_SYSTEM:  model.DeviceTypeTypeEnergyManagementSystem,
+	control_service.DeviceType_INVERTER:                  model.DeviceTypeTypeInverter,
+	control_service.DeviceType_CHARGING_STATION:          model.DeviceTypeTypeChargingStation,
+}
+
+// ConvertRPCDeviceType converts a proto DeviceType_Enum to the SPINE model.DeviceTypeType.
+func ConvertRPCDeviceType(dt control_service.DeviceType_Enum) model.DeviceTypeType {
+	if v, ok := deviceTypeMap[dt]; ok {
+		return v
+	}
+	return model.DeviceTypeTypeGeneric
+}
+
+// entityTypeOverrides covers the two proto enum names that differ from their SPINE equivalents:
+//   - "HvacController" → "HVACController"
+//   - "HvacRoom"       → "HVACRoom"
+//
+// All other EntityType_Enum names already match the SPINE strings exactly, so
+// ConvertRPCEntityType falls back to a direct cast for those.
+var entityTypeOverrides = map[control_service.EntityType_Enum]model.EntityTypeType{
+	control_service.EntityType_HvacController: model.EntityTypeTypeHvacController,
+	control_service.EntityType_HvacRoom:       model.EntityTypeTypeHvacRoom,
+}
+
+// ConvertRPCEntityType converts a proto EntityType_Enum to the SPINE model.EntityTypeType.
+func ConvertRPCEntityType(et control_service.EntityType_Enum) model.EntityTypeType {
+	if v, ok := entityTypeOverrides[et]; ok {
+		return v
+	}
+	return model.EntityTypeType(et.String())
+}
+
 func ConvertRPCEntityAddress(address *common_types.EntityAddress) []model.AddressEntityType {
 	var entity_address []model.AddressEntityType
 	for _, entry := range address.GetEntityAddress() {
